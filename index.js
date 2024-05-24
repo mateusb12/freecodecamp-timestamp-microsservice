@@ -5,8 +5,11 @@
 var express = require('express');
 var app = express();
 
+// Middleware to parse incoming requests
+app.use(express.json());
+
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
+// so that your API is remotely testable by FCC
 var cors = require('cors');
 app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
 
@@ -19,9 +22,47 @@ app.get("/", function (req, res) {
 });
 
 
-// your first API endpoint... 
+// your first API endpoint...
 app.get("/api/hello", function (req, res) {
   res.json({greeting: 'hello API'});
+});
+
+const handleTimestamp = (timestamp, res) => {
+  const date = new Date(parseInt(timestamp, 10));
+  if (!isNaN(date.getTime())) {
+    res.json({
+      unix: parseInt(timestamp, 10),
+      utc: date.toUTCString(),
+    });
+  } else {
+    res.status(400).json({ error: 'Invalid timestamp format' });
+  }
+};
+
+const handleDateString = (dateString, res) => {
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    res.json({
+      unix: date.getTime(),
+      utc: date.toUTCString(),
+    });
+  } else {
+    res.status(400).json({ error: 'Invalid date string format' });
+  }
+};
+
+app.get('/api/:date', (req, res) => {
+  const dateParam = req.params.date;
+
+  if (/^\d+$/.test(dateParam)) {
+    // Handle timestamp
+    handleTimestamp(dateParam, res);
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    // Handle date string
+    handleDateString(dateParam, res);
+  } else {
+    res.status(400).json({ error: 'Invalid date format' });
+  }
 });
 
 
